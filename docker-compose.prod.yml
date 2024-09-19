@@ -1,0 +1,75 @@
+services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  api-gateway:
+    build:
+      context: ./api_gateway
+    expose:
+      - 8000
+    depends_on:
+      - user-service
+      - tracking-service
+      - rabbitmq
+    entrypoint: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]  # ??
+
+  user-service:
+    build:
+      context: ./user_service
+    environment:
+      - DATABASE_URL=postgresql://user:password@user_db/users
+      - SECRET_KEY=mysecretkey
+    depends_on:
+      - user_db
+      - rabbitmq
+    entrypoint: ["/app/wait-for-it.sh", "user_db:5432", "--", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+
+  tracking-service:
+    build:
+      context: ./tracking_service
+    environment:
+      - DATABASE_URL=postgresql://user:password@tracking_db/trackings
+      - SECRET_KEY=mysecretkey
+      - USER_SERVICE_URL=http://user-service:8001
+    depends_on:
+      - tracking_db
+      - rabbitmq
+    entrypoint: ["sh", "-c", "./wait-for-it.sh rabbitmq:5672 -- ./wait-for-it.sh tracking_db:5432 -- uvicorn main:app --host 0.0.0.0 --port 8002 --reload"]
+  user_db:
+    image: postgres:13
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "users", "-U", "user"]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+
+  tracking_db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: trackings
+    volumes:
+      - tracking_db_data:/var/lib/postgresql/data
+
+
+volumes:
+  user_db_data:
+  tracking_db_data:
+
+networks:
+  default:
+    external: true
+    name: proxymanager_default

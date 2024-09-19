@@ -1,0 +1,12 @@
+fastapi
+sqlalchemy
+uvicorn
+passlib[bcrypt]
+pyjwt
+psycopg2-binary
+sqladmin
+pika
+pydantic[email]
+loguru
+pytest-cov
+alembic

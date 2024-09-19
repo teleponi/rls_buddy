@@ -1,0 +1,10 @@
+fastapi
+sqlalchemy
+uvicorn
+passlib[bcrypt]
+pyjwt
+psycopg2-binary
+pika
+httpx
+loguru
+alembic

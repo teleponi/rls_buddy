@@ -1,0 +1,15 @@
+curl -X POST "http://localhost:8000/token" -H "Content-Type: application/json" -d '{"email": "alice@example.com", "password": "secret"}'
+
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzIwNDc1NjI4fQ.RMQjbOaz8g1a0WwNGAygUacVbxz7fvvsgS65KNWDTMQ","token_type":"bearer"}
+
+curl -X GET "http://localhost:8000/users/me" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzIwNDc2Mzg0fQ.HvmI74-WSaiRR40mhxADK0YNR-O2E3UWHbU_mWR7-BM"
+
+
+geht noch nicht:
+
+curl -X POST "http://localhost:8000/trackings" -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzIwNDc2Mzg0fQ.HvmI74-WSaiRR40mhxADK0YNR-O2E3UWHbU_mWR7-BM"
+
+psql -d trackings -U user
+
+
+curl -X POST "http://localhost:8000/users" -H "Content-Type: application/json" -d '{"email": "alice@example.com", "password": "secret", "name": "Alice"}'
