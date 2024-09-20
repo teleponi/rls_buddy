@@ -33,9 +33,11 @@
                     <button type="submit"
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Login</button>
 
-                    <button @click="createUserScreen = true"
+                    <button @click="selectCreateUser()"
                         class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4">Create
                         User</button>
+
+
                 </form>
 
                 <div x-show="message" class="mt-4" :class="messageClass" x-text="message"></div>
@@ -74,6 +76,12 @@
                         <button type="submit"
                             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Create
                             User</button>
+
+                        <button @click="selectDashboard()"
+                            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-2">Zurück zur
+                            Auswahl
+                        </button>
+
                     </form>
 
                     <div x-show="message" class="mt-4" :class="messageClass" x-text="message"></div>
@@ -85,24 +93,23 @@
                     <h2 class="text-2xl font-bold mb-4">Dashboard</h2>
 
                     <button @click="selectTracking('sleep')"
-                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2">Track
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-2 w-full">Track
                         Sleep</button>
                     <button @click="selectOverview('sleep')"
-                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2">Show sleep
-                        entries
-                    </button>
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-2 w-full">Show
+                        sleep
+                        entries</button>
 
                     <button @click="selectOverview('day')"
-                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2">Show Days
-                    </button>
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-2 w-full">Show
+                        Days</button>
 
                     <button @click="selectTracking('day')"
-                        class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Track Day
-                    </button>
+                        class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mb-2 w-full">Track
+                        Day</button>
 
                     <button @click="logout()"
-                        class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Logout
-                    </button>
+                        class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mb-2 w-full">Logout</button>
 
                 </div>
             </template>
@@ -365,7 +372,6 @@
 
                         // day
                         dayDate: '',
-                        dayActivity: '',
                         dayComment: '',
                         late_morning_symptoms: [],
                         afternoon_symptoms: [],
@@ -379,35 +385,39 @@
                         trackingOverview: [],
 
                         logout() {
+                            this.reset();
                             this.isAuthenticated = false;
                             this.token = '';
-                            this.isTracking = false;
-                            this.isOverview = false;
-                            this.message = '';
-                            this.messageClass = '';
                         },
 
-                        login() {
-                            fetch('http://127.0.0.1:8000/token', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                },
-                                body: `username=${this.email}&password=${this.password}`,
-                            })
-                                .then(response => response.json())
-                                .then(data => {
+                        async login() {
+                            try {
+                                const response = await fetch('http://127.0.0.1:8000/token', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                    },
+                                    body: `username=${this.email}&password=${this.password}`,
+                                });
+
+                                let data = await response.json();
+                                if (response.ok) {
                                     if (data.access_token) {
                                         this.token = data.access_token;
                                         this.isAuthenticated = true;
                                         this.fetchSymptoms();
                                         this.fetchTriggers();
                                         this.message = '';
-                                    } else {
-                                        this.message = 'Login failed';
-                                        this.messageClass = 'bg-red-500 text-white p-2 rounded';
+                                        return
                                     }
-                                })
+                                }
+                                this.message = `Failed to login:\n${data.detail}`;
+                                this.messageClass = 'bg-red-500 text-white p-2 rounded';
+
+                            } catch (error) {
+                                this.message = `Failed to login`;
+                                this.messageClass = 'bg-red-500 text-white p-2 rounded';
+                            }
                         },
                         async createUser() {
                             if (this.password !== this.confirmPassword) {
@@ -434,7 +444,7 @@
                                     this.createUserScreen = false;
                                 } else {
                                     let data = await response.json();
-                                    this.message = `Failed to create user:<br>${data.detail.join('<br>')}`;
+                                    this.message = `Failed to create user:\n${data.detail}`;
                                     this.messageClass = 'bg-red-500 text-white p-2 rounded';
                                 }
 
@@ -500,26 +510,52 @@
                         },
 
                         goBackToMain() {
-                            this.isOverview = false;
+                            this.reset()
+                        },
+
+                        reset() {
                             this.isTracking = false;
+                            this.isOverview = false;
+                            this.createUserScreen = false;
                             this.trackingType = '';
                             this.trackingOverview = [];
-                            tihs.currentTrackingId = null;
+                            this.currentTrackingId = null;
+                            this.message = '';
+                            this.messageClass = '';
+                            this.email = '';
+                            this.password = '';
+                            this.sleepDate = '';
+                            this.sleepDuration = '';
+                            this.sleepQuality = 'good';
+                            this.sleepComment = '';
+                            this.selectedSymptoms = [];
+                            this.name = '';
+                            this.dayDate = '';
+                            this.dayComment = '';
+                            this.selectedDaySymptoms = [];
+                            this.selectedAfternoonSymptoms = [];
+                            this.selectedTriggers = [];
                         },
+
                         selectTracking(type) {
+                            this.reset()
                             this.trackingType = type;
                             this.isTracking = true;
                             this.isOverview = false;
                         },
+                        selectDashboard() {
+                            this.reset()
+                        },
+                        selectCreateUser() {
+                            this.reset()
+                            this.createUserScreen = true;
+                        },
 
                         selectOverview(type) {
+                            this.reset()
                             this.trackingType = type;
                             this.isOverview = true;
-                            this.isTracking = false;
                             this.fetchOverview();
-                            this.message = '';
-                            this.messageClass = '';
-
                         },
 
                         clearSleepForm() {
