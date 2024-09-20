@@ -236,7 +236,7 @@ to generate a coverage report, run:
 
    ```bash
    cd user_service
-   pytest tests -vv --cov=./  --no-header
+   pytest tests -vv --cov=./ --cov-config=.converage.rc --no-header
    ```
    to generate a html report, run:
    ```bash

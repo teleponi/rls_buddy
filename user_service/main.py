@@ -31,6 +31,7 @@ logger.add(
 )
 
 app = get_app()
+database.init_db()
 
 
 @app.exception_handler(RequestValidationError)
@@ -52,7 +53,3 @@ async def validation_exception_handler(
             }
         ),
     )
-
-
-if __name__ == "__main__":
-    database.init_db()

@@ -13,6 +13,7 @@ pika
 pytest
 pytest-asyncio
 pytest-cov
+pydantic[email]
 sqlalchemy-utils
 httpx
 loguru

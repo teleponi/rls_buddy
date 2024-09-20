@@ -1,6 +1,24 @@
 from unittest.mock import MagicMock, patch
 
 from crud import get_user, get_user_by_email, get_user_by_id
+from fastapi import status
+
+
+def test_create_user_invalid_password_and_name(client, db):
+    response = client.post(
+        "/users/",
+        json={
+            "name": "Test User",
+            "email": "testuser@example.com",
+            "password": "123",
+        },
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == [
+        "name:Value error, Spaces are not allowed in the name",
+        "password:String should have at least 4 characters",
+    ]
+    assert type(response.json()["detail"]) == list
 
 
 def test_create_user(client, db):
@@ -15,6 +33,26 @@ def test_create_user(client, db):
     assert response.status_code == 201
     assert response.json()["email"] == "testuser@example.com"
     assert get_user_by_email(db, "testuser@example.com").email == "testuser@example.com"
+
+
+def test_create_user_with_same_email(items, client, db):
+    response = client.post(
+        "/users/",
+        json={
+            "name": "Grumpio",
+            "email": "grumpy@cat.de",
+            "password": "123456",
+        },
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "User with this email already exists"
+
+
+def test_get_token_invalid_user(client):
+    data = {"username": "not@exisint.de", "password": "123456"}
+    response = client.post("/token", data=data)
+    assert response.status_code == 401
+    assert "access_token" not in response.json()
 
 
 def test_get_token(items, client):
@@ -48,6 +86,17 @@ def test_create_user_and_get_me(db, client):
     assert me_response.status_code == 200
     assert me_response.json()["email"] == email
     assert len(get_user(db)) == 1
+
+
+def test_delete_user_raises_401_if_user_not_found(items, client):
+    # Call the endpoint
+    token = "fake-token"
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.delete("users/me", headers=headers)
+
+    # Assert that the response status code is 404
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.json() == {"detail": "Could not validate credentials"}
 
 
 def test_delete_user(items, db, client, monkeypatch):

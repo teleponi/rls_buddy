@@ -25,8 +25,6 @@ def delete_user(
     user_id_db: tuple[Session, int] = Security(
         authentication.verify_token, scopes=["me"]
     ),
-    # current_user_id: UserOut = Security(authentication.verify_token, scopes=["me"]),
-    # db: Session = Depends(get_db),
 ) -> None:
     """
     Delete authenticated user
@@ -51,27 +49,28 @@ def delete_user(
     publish_user_delete_event(event)
 
 
-@router.post("/admin", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-def create_admin_user(
-    user: UserCreate,
-    user_id_db: tuple[Session, int] = Security(
-        authentication.verify_token, scopes=["me"]
-    ),
-    # db: Session = Depends(get_db),
-) -> UserOut:
-    """
-    Create a new admin user.
-    """
-
-    db, current_user_id = user_id_db
-    logger.info(f" User {current_user_id} created a new user adminuser {user}")
-    try:
-        return crud.create_user(db, user, role=Role.ADMIN)
-    except crud.UserExistsError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email already exists." + str(e),
-        )
+# @router.post("/admin", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+# def create_admin_user(
+#     user: UserCreate,
+#     user_id_db: tuple[Session, int] = Security(
+#         authentication.verify_token, scopes=["me"]
+#     ),
+#     # db: Session = Depends(get_db),
+# ) -> UserOut:
+#     """
+#     Create a new admin user.
+#     """
+#
+#     db, current_user_id = user_id_db
+#     logger.info(f" User {current_user_id} created a new user adminuser {user}")
+#     try:
+#         return crud.create_user(db, user, role=Role.ADMIN)
+#     except crud.UserExistsError as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="User with this email already exists." + str(e),
+#         )
+#
 
 
 @router.post("/", response_model=UserOut, status_code=status.HTTP_201_CREATED)
@@ -87,7 +86,7 @@ def create_user(
     except crud.UserExistsError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email already exists.",
+            detail="User with this email already exists",
         )
     except crud.UserNotValidError as e:
         raise HTTPException(
@@ -96,30 +95,30 @@ def create_user(
         )
 
 
-@router.put("/", response_model=UserOut, status_code=status.HTTP_200_OK)
-def update_user(
-    user: UserUpdate,
-    user_id_db: tuple[Session, int] = Security(
-        authentication.verify_token, scopes=["me"]
-    ),
-) -> UserOut:
-    """
-    Create a new standard user.
-    """
-    db, current_user_id = user_id_db
-    try:
-        return crud.update_user(db, user, current_user_id)
-    except crud.UserExistsError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email already exists." + str(e),
-        )
-    except crud.UserNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    except crud.UserNotAllowedError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"{e}",
-        )
+# @router.put("/", response_model=UserOut, status_code=status.HTTP_200_OK)
+# def update_user(
+#     user: UserUpdate,
+#     user_id_db: tuple[Session, int] = Security(
+#         authentication.verify_token, scopes=["me"]
+#     ),
+# ) -> UserOut:
+#     """
+#     Create a new standard user.
+#     """
+#     db, current_user_id = user_id_db
+#     try:
+#         return crud.update_user(db, user, current_user_id)
+#     except crud.UserExistsError as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="User with this email already exists." + str(e),
+#         )
+#     except crud.UserNotFoundError:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+#         )
+#     except crud.UserNotAllowedError as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail=f"{e}",
+#         )

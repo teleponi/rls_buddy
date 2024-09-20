@@ -8,21 +8,6 @@ from loguru import logger
 logger.add(sys.stderr, format="{level} {time} {message}", colorize=True, level="INFO")
 
 
-def old_publish_user_delete_event(event):
-    print("publish_user_delete_event")
-    logger.info("publish_user_delete_event")
-
-    connection = pika.BlockingConnection(pika.ConnectionParameters("rabbitmq"))
-    channel = connection.channel()
-    channel.queue_declare(queue="user_events")
-    channel.basic_publish(
-        exchange="",
-        routing_key="user_events",
-        body=json.dumps(event),
-    )
-    connection.close()
-
-
 def publish_user_delete_event(event):
     """
     Publishes a user deletion event to a RabbitMQ fanout exchange,
