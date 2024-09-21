@@ -18,3 +18,4 @@ sqlalchemy-utils
 httpx
 loguru
 alembic
+rich

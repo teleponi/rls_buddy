@@ -117,20 +117,43 @@ def create_sleep_tracking(
     return db_tracking
 
 
-@router.put("/{tracking_type}/{tracking_id}", response_model=TrackingOutSchemes)
-def update_tracking(
-    tracking_type: str,
+@router.put("/sleep/{tracking_id}", response_model=SleepOut)
+def update_sleep_tracking(
+    # tracking_type: str,
     tracking_id: int,
-    tracking: TrackingUpdateSchemes,
+    tracking: SleepUpdate,
     db: Session = Depends(get_db),
     user_id: int = Security(get_user_id_from_token, scopes=["me"]),
-) -> TrackingOutSchemes:
+) -> SleepOut:
     """
-    TrackingUpdate
+    Sleep TrackingUpdate
+    """
+    tracking_type = "sleep"
+    try:
+        return crud.update_tracking(db, tracking, tracking_type, tracking_id, user_id)
+    except crud.TrackingNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Tracking not found"
+        )
+    except crud.TrackingNotAllowedError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"{e}")
+    except crud.TrackingNotUpdatedError as e:
+        logger.error(f"{e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"{e}")
 
-    # todo: chek if user_id is allowded to update this tracking
-    # todo: check if pydantic_model update is possible
+
+@router.put("/day/{tracking_id}", response_model=DayOut)
+def update_day_tracking(
+    # tracking_type: str,
+    tracking_id: int,
+    tracking: SleepUpdate,
+    db: Session = Depends(get_db),
+    user_id: int = Security(get_user_id_from_token, scopes=["me"]),
+) -> DayOut:
     """
+    Day TrackingUpdate
+    """
+    tracking_type = "day"
     try:
         return crud.update_tracking(db, tracking, tracking_type, tracking_id, user_id)
     except crud.TrackingNotFoundError:

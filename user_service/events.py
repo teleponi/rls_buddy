@@ -62,7 +62,7 @@ def publish_user_delete_event(event):
     channel.exchange_declare(
         exchange="user_events_exchange",
         exchange_type="fanout",
-        durable=True,
+        # durable=True,
     )
 
     # Publish the event to the fanout exchange (no routing key needed for fanout)
