@@ -25,17 +25,18 @@ TrackingUpdateSchemes = SleepUpdate | DayUpdate
 
 router = APIRouter(prefix="/trackings", tags=["Trackings"])
 
-
-@router.get(
-    "/health",
-    status_code=status.HTTP_200_OK,
-    include_in_schema=False,
-)
-async def health_check_new(
-    user_id: str = Security(get_user_id_from_token, scopes=["me"]),
-) -> dict:
-    if user_id:
-        return {"user_id": user_id}
+#
+# @router.get(
+#     "/health",
+#     status_code=status.HTTP_200_OK,
+#     include_in_schema=False,
+# )
+# async def health_check_new(
+#     user_id: str = Security(get_user_id_from_token, scopes=["me"]),
+# ) -> dict:
+#     if user_id:
+#         return {"user_id": user_id}
+#
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)

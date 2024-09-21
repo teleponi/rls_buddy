@@ -232,7 +232,6 @@ def delete_trackings_by_user(
         logger.info(f"Deleted all trackings for user {user_id} successfully.")
 
     except Exception as e:
-        # Rollback der Transaktion bei Fehler
         logger.warning(f"Deletion of trackings for user {user_id} not happended.")
         raise Exception(f"Fehler beim Löschen der Trackings: {str(e)}")
 
@@ -241,8 +240,8 @@ def get_trackings_by_user(
     db: Session,
     type: str,
     user_id: int,
-    start_date: datetime,
-    end_date: datetime,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
 ) -> list[models.Tracking]:
     """Get trackings by user_id. Optionally filter by start and end dates."""
     model = models.alchemy_model_factory(model_type=type)

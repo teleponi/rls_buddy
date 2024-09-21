@@ -3,8 +3,10 @@ from datetime import datetime
 import crud
 import pytest
 import schemas as schemes
-from enums import SleepQuality, TrackingType
+from enums import SleepQuality, TrackingType, TriggerCategory
+from httpx import AsyncClient
 from pydantic import ValidationError
+from sqlalchemy.exc import IntegrityError
 
 
 def test_create_symptom_success(db):
@@ -12,6 +14,86 @@ def test_create_symptom_success(db):
     symptom = crud.create_symptom(db, symptom_data)
     assert symptom.id is not None
     assert symptom.name == "Restless Legs"
+
+
+def test_create_trigger_success(db):
+    trigger_data = schemes.TriggerCreate(
+        name="Nikotin",
+        category=TriggerCategory.FOOD,
+    )
+    trigger = crud.create_trigger(db, trigger_data)
+    assert trigger.id is not None
+    assert trigger.name == "Nikotin"
+
+
+def test_cannot_create_trigger_same_name_twice(db):
+    trigger_data = schemes.TriggerCreate(
+        name="Nikotin",
+        category=TriggerCategory.FOOD,
+    )
+    trigger = crud.create_trigger(db, trigger_data)
+    trigger_data = schemes.TriggerCreate(
+        name="Nikotin",
+        category=TriggerCategory.FOOD,
+    )
+    with pytest.raises(IntegrityError):
+        crud.create_trigger(db, trigger_data)
+
+
+def test_delete_trackings_by_user(items, db):
+    """Test, ob alle Schlaf-Trackings eines Benutzers gelöscht werden können."""
+    user_id = 1
+    trackings = crud.get_trackings_by_user(db, TrackingType.SLEEP, user_id)
+    assert len(trackings) > 0
+
+    trackings = crud.get_trackings_by_user(db, TrackingType.DAY, user_id)
+    assert len(trackings) > 0
+
+    crud.delete_trackings_by_user(db, user_id)
+    trackings = crud.get_trackings_by_user(db, TrackingType.SLEEP, user_id)
+    assert len(trackings) == 0
+
+
+def test_create_day_success(items, db):
+    day_data = schemes.DayCreate(
+        date=datetime(2024, 11, 7),
+        comment="Slept well",
+        afternoon_symptoms=[1, 2],
+        late_morning_symptoms=[1, 2],
+        triggers=[1, 2],
+    )
+    user_id = 1
+    day = crud.create_tracking(db, day_data, TrackingType.DAY, user_id)
+    assert day.id is not None
+    assert day.user_id == user_id
+    assert day.date == datetime(2024, 11, 7)
+    assert day.comment == "Slept well"
+    assert day.afternoon_symptoms == crud.get_symptoms(db, [1, 2])
+    assert day.late_morning_symptoms == crud.get_symptoms(db, [1, 2])
+    assert day.triggers == crud.get_triggers(db, [1, 2])
+
+
+def test_update_day_success(items, db):
+    # Create a day entry first
+    day_id = 1
+    user_id = 1
+
+    # Update the created day entry
+    updated_day_data = schemes.DayUpdate(
+        comment="Bad day day",
+        symptoms=[2],
+        afternoon_symptoms=[1],
+        late_morning_symptoms=[1],
+        triggers=[],
+    )
+    updated_day = crud.update_tracking(
+        db, updated_day_data, TrackingType.DAY, day_id, user_id
+    )
+    assert updated_day.id == day_id
+    assert updated_day.comment == "Bad day day"
+    assert updated_day.afternoon_symptoms == crud.get_symptoms(db, [1])
+    assert updated_day.late_morning_symptoms == crud.get_symptoms(db, [1])
+    assert updated_day.triggers == []
 
 
 def test_create_sleep_success(items, db):
@@ -74,6 +156,21 @@ def test_update_sleep_not_found(db):
     with pytest.raises(crud.TrackingNotFoundError):
         crud.update_tracking(
             db, updated_sleep_data, TrackingType.SLEEP, 999, 1
+        )  # 999 Non-existent ID
+
+
+def test_update_day_not_exists(db):
+    updated_day_data = schemes.DayUpdate(
+        comment="Bad day day",
+        symptoms=[2],
+        afternoon_symptoms=[1],
+        late_morning_symptoms=[1],
+        triggers=[],
+    )
+
+    with pytest.raises(crud.TrackingNotFoundError):
+        crud.update_tracking(
+            db, updated_day_data, TrackingType.DAY, 999, 1
         )  # 999 Non-existent ID
 
 
