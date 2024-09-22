@@ -53,6 +53,12 @@ def get_token(email, password):
     return response.json()["access_token"]
 
 
+def get_all_trackings(user_id):
+    url = f"{BASE_URL}/trackings"
+    response = requests.get(url, params={"user_id": user_id})
+    return response
+
+
 def create_sleep_tracking(token, duration, date, quality, symptoms, comment):
     """Create a sleep tracking entry."""
     url = f"{BASE_URL}/trackings/sleep"
@@ -173,10 +179,15 @@ def main():
     assert delete_response.status_code == 204
     table.add_row("Delete User", "204", "204")
 
-    # Attempt to get sleep tracking (should result in 404)
+    # Attempt to get get old users sleep trackings (should result in 401)
     result = get_sleep_tracking(token)
     assert result.status_code == 401
     table.add_row("Get Sleep Tracking (Unauthorized)", "401", "401")
+
+    # attempt to get all trackings of this user (internal endpoint)
+    result = get_all_trackings(1)
+    assert result.status_code == 404
+    table.add_row("Get All Trackings", "404", "404")
 
     console.print(table)
 

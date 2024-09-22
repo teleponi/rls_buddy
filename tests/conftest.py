@@ -23,6 +23,8 @@ def create_user():
         "password": "password123",
     }
     response = requests.post(f"{USER_SERVICE_URL}/users/", json=user_data)
+
+    user_data["id"] = response.json()["id"]
     response.raise_for_status()
     return user_data, response.json()
 

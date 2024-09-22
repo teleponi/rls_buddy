@@ -17,6 +17,7 @@ Functions:
     - get_symptoms: Retrieve symptom entries, optionally filtered by IDs.
     - create_trigger: Create a new trigger entry.
     - get_triggers: Retrieve trigger entries, optionally filtered by IDs.
+    - get_trackings:Retrieve trackings by user ID with optional date filters.
 
 Exceptions:
     - TrackingNotValidError: Raised when tracking data is not valid.
@@ -256,6 +257,33 @@ def get_trackings_by_user(
             queries.append(model.timestamp <= end_date)
 
     return db.query(model).filter(*queries).all()
+
+
+def get_trackings(
+    db: Session,
+    user_id: int | None = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+) -> list[models.Tracking]:
+    """Get trackings. Optionally filter by start and end dates."""
+    trackings: list[models.Tracking] = []
+
+    for type_ in ["sleep", "day"]:
+        model = models.alchemy_model_factory(model_type=type_)
+        queries = [model.user_id == user_id] if user_id else []
+
+        if start_date and end_date:
+            if type_ in ["sleep", "day"]:
+                queries.append(model.date >= start_date)
+                queries.append(model.date <= end_date)
+            else:
+                queries.append(model.timestamp >= start_date)
+                queries.append(model.timestamp <= end_date)
+
+        if result := db.query(model).filter(*queries).all():
+            trackings.extend(result)
+
+    return trackings
 
 
 def create_symptom(

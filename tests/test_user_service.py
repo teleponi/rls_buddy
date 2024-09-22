@@ -107,10 +107,16 @@ def test_delete_user(create_user, create_sleep_tracking):
     delete_response = requests.delete(f"{API_GATEWAY_URL}/users/me", headers=headers)
     assert delete_response.status_code == 204
 
-    # Verify the sleep tracking entry was deleted
+    # Verify the trackings was deleted
+    params = {"user_id": create_user[0]["id"]}
+
     trackings_response = requests.get(
-        f"{API_GATEWAY_URL}/trackings/me?type=sleep", headers=headers
+        f"{API_GATEWAY_URL}/trackings/",
+        headers=headers,
+        params=params,
     )
+    print(trackings_response.json())
+
     assert (
         trackings_response.status_code == 404
     )  # Expecting 404 since the tracking data should be deleted

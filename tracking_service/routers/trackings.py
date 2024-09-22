@@ -1,5 +1,6 @@
 import sys
 from datetime import datetime
+from typing import Annotated
 
 import crud
 from auth import get_user_id_from_token
@@ -25,18 +26,36 @@ TrackingUpdateSchemes = SleepUpdate | DayUpdate
 
 router = APIRouter(prefix="/trackings", tags=["Trackings"])
 
-#
-# @router.get(
-#     "/health",
-#     status_code=status.HTTP_200_OK,
-#     include_in_schema=False,
-# )
-# async def health_check_new(
-#     user_id: str = Security(get_user_id_from_token, scopes=["me"]),
-# ) -> dict:
-#     if user_id:
-#         return {"user_id": user_id}
-#
+
+@router.get(
+    "/health",
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
+async def health_check_new() -> dict:
+    return {"status": "ok"}
+
+
+authenticate_dependency = Annotated[
+    int, Security(get_user_id_from_token, scopes=["me"])
+]
+
+
+@router.get("/", response_model=list[TrackingOutSchemes])
+def get_all_trackings(
+    user_id: int | None = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+    db: Session = Depends(get_db),
+) -> list[TrackingOutSchemes]:
+    """Endpoint to get all trackings in system. only for internal and admin analysis."""
+    trackings = crud.get_trackings(db, user_id, start_date, end_date)
+    if not trackings:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No trackings found",
+        )
+    return trackings
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
@@ -58,7 +77,6 @@ async def get_trackings_by_user(
     end_date: datetime | None = None,
     db: Session = Depends(get_db),
     user_id: int = Security(get_user_id_from_token, scopes=["me"]),
-    # user_id: int = Security(verify_token, scopes=["me"]),
 ) -> list[TrackingOutSchemes]:
     """Endpoint to get all trackings for the current user."""
 

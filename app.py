@@ -36,14 +36,21 @@ menu = (
     "7 create new user",
     "8 validate token",
     "9 delete tracking",
-    "10 authenticate",
+    "10 get all trackings",
     "11 delete all trackings",
+    "12 check health status",
 )
 
 
 class Token(pydantic.BaseModel):
     access_token: str
     token_type: str
+
+
+def check_health_status(service):
+    url = f"{LOCAL_URL}/{service}/health"
+    response = requests.get(url)
+    print(response.json())
 
 
 def create_new_user():
@@ -235,6 +242,32 @@ def create_tracking(token, data, update=False):
         return response.text, response.status_code
 
 
+def get_trackings():
+    url = f"{LOCAL_URL}/trackings"
+    start_date = None
+    end_date = None
+
+    params = {}
+    choose_dates = input("do you want to enter dates? (y/n): ")
+    if choose_dates == "y":
+        start_date = input("please enter start date (YYYY-MM-DD): ")
+        end_date = input("please enter end date (YYYY-MM-DD): ")
+
+    if start_date and end_date:
+        params |= {
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        return response.json()  # Returns the response as a dictionary
+    else:
+        print(response.status_code)
+        print(response.json())
+
+
 def get_my_trackings(token):
     url = f"{LOCAL_URL}/trackings/me"
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -417,10 +450,20 @@ if __name__ == "__main__":
         elif choice == "9":
             tracking_id = input("which sleep tracking to delete? ")
             delete_tracking(token, tracking_id)
+        elif choice == "10":
+            if response := get_trackings():
+                if "error" not in response:
+                    for row in response:
+                        print(row)
+                else:
+                    print(response["error"])
         elif choice == "11":
             tracking_delete = input("really want to delete all trackings? (y/n): ")
             if tracking_delete == "y":
                 delete_all_trackings(token)
+        elif choice == "12":
+            service = input("which service to check? (trackings, sleeps): ")
+            check_health_status(service)
 
         else:
             print("invalid choice")
