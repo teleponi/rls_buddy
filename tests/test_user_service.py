@@ -7,6 +7,10 @@ import requests
 API_GATEWAY_URL = "http://localhost:8080"
 
 
+def uniq():
+    return str(uuid.uuid4())[:8]
+
+
 def test_create_user():
     """
     Test user creation via the API gateway.
@@ -15,12 +19,12 @@ def test_create_user():
     user. Asserts that the response status code is 201, indicating
     successful creation.
     """
-    email = "email_{}@example.com".format(str(uuid.uuid4()).replace("-", ""))
+    email = "email_{}@example.com".format(uniq().replace("-", ""))
     password = "password123"
     response = requests.post(
         f"{API_GATEWAY_URL}/users/",
         json={
-            "name": "TestUser" + str(uuid.uuid4()).replace("-", ""),
+            "name": "TestUser" + uniq().replace("-", ""),
             "email": email,
             "password": password,
         },
@@ -88,7 +92,6 @@ def test_delete_user(create_user, create_sleep_tracking):
     email = create_user[0]["email"]
     password = create_user[0]["password"]
 
-    # Ensure the sleep tracking entry was created
     token_response = requests.post(
         f"{API_GATEWAY_URL}/token",
         data={"username": email, "password": password},
@@ -100,12 +103,18 @@ def test_delete_user(create_user, create_sleep_tracking):
     trackings_response = requests.get(
         f"{API_GATEWAY_URL}/trackings/me?type=sleep", headers=headers
     )
+
+    # Verify the sleep tracking was created
     assert trackings_response.status_code == 200
     assert len(trackings_response.json()) > 0
 
     # Delete the user
     delete_response = requests.delete(f"{API_GATEWAY_URL}/users/me", headers=headers)
     assert delete_response.status_code == 204
+
+    # Verify the user was deleted (401 Unauthorized)
+    response = requests.get(f"{API_GATEWAY_URL}/users/me", headers=headers)
+    assert response.status_code == 401
 
     # Verify the trackings was deleted
     params = {"user_id": create_user[0]["id"]}
@@ -115,8 +124,5 @@ def test_delete_user(create_user, create_sleep_tracking):
         headers=headers,
         params=params,
     )
-    print(trackings_response.json())
 
-    assert (
-        trackings_response.status_code == 404
-    )  # Expecting 404 since the tracking data should be deleted
+    assert trackings_response.status_code == 404
