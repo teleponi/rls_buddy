@@ -203,88 +203,89 @@ to generate a coverage report, run:
    ```bash
    cd tracking_service
    pytest tests -vv --cov=./  --no-header
-   ```
+```
 
 to generate a html report, run:
    ```bash
     pytest tests/ -vv --cov=./  --cov-report=html --no-header
-    ```
+```
 
 ### Migrations
 
-    Migraitons are done with Alembic. To init alembic in a new service, run:
+Migrations are done with Alembic. To init alembic in a new service, run:
 
-    change in docker file
-    ```bash
-    RUN chown -R nonrootuser:nonrootuser /app
-    RUN chmod +x /app/wait-for-it.sh
-    ```
+change in docker file:
 
-    mount directory in docker-compose file
+```bash
+RUN chown -R nonrootuser:nonrootuser /app
+RUN chmod +x /app/wait-for-it.sh
+```
 
-    ```bash
-    volumes:
-      - ./tracking_service:/app
-    ```
+mount directory in docker-compose file:
 
-    ```bash
-    docker-compose exec user-service alembic init alembic
-    ```
+```bash
+volumes:
+  - ./tracking_service:/app
+```
 
-    change the `alembic.ini` file to point to the database url.
+```bash
+docker-compose exec user-service alembic init alembic
+```
 
-    ```bash
-    script_location = alembic
-    sqlalchemy.url = postgresql://user:password@user_db/users
-    ```
+change the `alembic.ini` file to point to the database url.
 
-    change the `env.py` file to import the Base model
+```bash
+script_location = alembic
+sqlalchemy.url = postgresql://user:password@user_db/users
+```
 
-    ```python
-    from models import Base
-    target_metadata = Base.metadata
-    ```
+change the `env.py` file to import the Base model
 
-    To create first migration, run:
+```python
+from models import Base
+target_metadata = Base.metadata
+```
 
-    ```bash
-    docker-compose exec user-service alembic revision "Initial migration"
-    ```
+To create first migration, run:
 
-    if you already defined models, use autogenerate to create migration files:
+```bash
+docker-compose exec user-service alembic revision "Initial migration"
+```
 
-    ```bash
-    docker-compose exec user-service alembic revision --autogenerate -m "Add user table"
-    ```
+if you already defined models, use autogenerate to create migration files:
 
-    Change revision file accordingly.
+```bash
+docker-compose exec user-service alembic revision --autogenerate -m "Add user table"
+```
 
-    To apply migration, run:
-    ```bash
-    docker-compose exec user-service alembic upgrade head
-    ```
+Change revision file accordingly.
 
-    to login to the database and view the tables, run:
-    ```bash
-    docker exec -it rls_buddy-user_db-1 psql -U user -d users
-    ```
+To apply migration, run:
+```bash
+docker-compose exec user-service alembic upgrade head
+```
 
-    to view the history of migrations, run:
-    ```bash
-    docker-compose exec user-service alembic history
-    ```
+to login to the database and view the tables, run:
+```bash
+docker exec -it rls_buddy-user_db-1 psql -U user -d users
+```
 
-    to view the current version of the database, run:
-    ```bash
-    docker-compose exec user-service alembic current
-    ```
+to view the history of migrations, run:
+```bash
+docker-compose exec user-service alembic history
+```
 
-    to downgrade a migration, run:
-    ```bash
-    docker-compose exec user-service alembic downgrade -1
-    ```
+to view the current version of the database, run:
+```bash
+docker-compose exec user-service alembic current
+```
 
-    to upgrade to a specific version, run:
-    ```bash
-    docker-compose exec user-service alembic upgrade +1
-    ```
+to downgrade a migration, run:
+```bash
+docker-compose exec user-service alembic downgrade -1
+```
+
+to upgrade to a specific version, run:
+```bash
+docker-compose exec user-service alembic upgrade +1
+```
