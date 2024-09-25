@@ -58,14 +58,7 @@ To get started with RLS-BUDDY, follow these steps:
    pip install -r requirements.txt
    ```
 
-4. **Set up environment variables:**
-   Create a `.env` file in the root directory and add the necessary environment variables.
-   ```plaintext
-   DATABASE_URL=your_database_url
-   JWT_SECRET=your_jwt_secret
-   ```
-
-5. **Run the application on localhost 8000:**
+4. **Run the application on localhost 8000:**
    ```bash
     docker-compose -f docker-compose.test.yml up --build -d
    ```
@@ -75,6 +68,8 @@ To get started with RLS-BUDDY, follow these steps:
     docker-compose -f docker-compose.test.yml -p test up --build -d
    ```
 
+6 **to access the RabbitMQ Dashboard locally**
+type `http://localhost:15672/` in your browser and login with `guest` as username and password.
 
 
 ## Usage
