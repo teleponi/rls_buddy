@@ -4,7 +4,7 @@ import pytest
 import requests
 
 
-API_GATEWAY_URL = "http://localhost:8080"
+API_TEST_GATEWAY_URL = "http://127.0.0.1:8080"
 
 
 def uniq():
@@ -22,7 +22,7 @@ def test_create_user():
     email = "email_{}@example.com".format(uniq().replace("-", ""))
     password = "password123"
     response = requests.post(
-        f"{API_GATEWAY_URL}/users/",
+        f"{API_TEST_GATEWAY_URL}/users/",
         json={
             "name": "TestUser" + uniq().replace("-", ""),
             "email": email,
@@ -63,7 +63,7 @@ def test_cannot_get_token_with_invalid_credentials(create_user):
     password = "invalid_password"
 
     response = requests.post(
-        f"{API_GATEWAY_URL}/token",
+        f"{API_TEST_GATEWAY_URL}/token",
         data={"username": email, "password": password},
     )
     assert response.status_code == 401
@@ -81,7 +81,7 @@ def test_get_token(create_user):
     password = create_user[0]["password"]
 
     response = requests.post(
-        f"{API_GATEWAY_URL}/token",
+        f"{API_TEST_GATEWAY_URL}/token",
         data={"username": email, "password": password},
     )
     assert response.status_code == 200
@@ -93,7 +93,7 @@ def test_delete_user(create_user, create_sleep_tracking):
     password = create_user[0]["password"]
 
     token_response = requests.post(
-        f"{API_GATEWAY_URL}/token",
+        f"{API_TEST_GATEWAY_URL}/token",
         data={"username": email, "password": password},
     )
     token_response.raise_for_status()
@@ -101,7 +101,7 @@ def test_delete_user(create_user, create_sleep_tracking):
     headers = {"Authorization": f"Bearer {token}"}
 
     trackings_response = requests.get(
-        f"{API_GATEWAY_URL}/trackings/me?type=sleep", headers=headers
+        f"{API_TEST_GATEWAY_URL}/trackings/me?type=sleep", headers=headers
     )
 
     # Verify the sleep tracking was created
@@ -109,18 +109,20 @@ def test_delete_user(create_user, create_sleep_tracking):
     assert len(trackings_response.json()) > 0
 
     # Delete the user
-    delete_response = requests.delete(f"{API_GATEWAY_URL}/users/me", headers=headers)
+    delete_response = requests.delete(
+        f"{API_TEST_GATEWAY_URL}/users/me", headers=headers
+    )
     assert delete_response.status_code == 204
 
     # Verify the user was deleted (401 Unauthorized)
-    response = requests.get(f"{API_GATEWAY_URL}/users/me", headers=headers)
+    response = requests.get(f"{API_TEST_GATEWAY_URL}/users/me", headers=headers)
     assert response.status_code == 401
 
     # Verify the trackings was deleted
     params = {"user_id": create_user[0]["id"]}
 
     trackings_response = requests.get(
-        f"{API_GATEWAY_URL}/trackings/",
+        f"{API_TEST_GATEWAY_URL}/trackings/",
         headers=headers,
         params=params,
     )

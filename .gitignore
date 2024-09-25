@@ -9,3 +9,5 @@ __pycache__
 test.db
 .pytest_cache
 .ruff_cache
+readme_postgres.md
+readme_pytest.md

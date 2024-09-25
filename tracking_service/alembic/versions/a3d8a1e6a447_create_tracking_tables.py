@@ -5,6 +5,7 @@ Revises:
 Create Date: 2024-09-14 21:52:46.606892
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -120,6 +121,19 @@ def upgrade() -> None:
             ["symptoms.id"],
         ),
     )
+    try:
+        op.execute("INSERT INTO symptoms (name) VALUES ('Pain')")
+        op.execute("INSERT INTO symptoms (name) VALUES ('Squibble')")
+        op.execute("INSERT INTO symptoms (name) VALUES ('Headache')")
+        op.execute("INSERT INTO symptoms (name) VALUES ('Nausea')")
+
+        op.execute("INSERT INTO triggers (name, category) VALUES ('sugar', 'FOOD')")
+        op.execute("INSERT INTO triggers (name, category) VALUES ('nikotin', 'FOOD')")
+        op.execute(
+            "INSERT INTO triggers (name, category) VALUES ('sport', 'LIFESTYLE')"
+        )
+    except Exception as e:
+        print("Error inserting data", e)
     # ### end Alembic commands ###
 
 

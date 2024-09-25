@@ -9,7 +9,7 @@ The following tests are included:
 import requests
 
 
-TRACKING_SERVICE_URL = "http://localhost:8080"
+API_TEST_GATEWAY_URL = "http://127.0.0.1:8080"
 
 
 def test_create_day_tracking(get_auth_token, create_symptoms_and_triggers):
@@ -18,7 +18,7 @@ def test_create_day_tracking(get_auth_token, create_symptoms_and_triggers):
     symptoms, triggers = create_symptoms_and_triggers  # Use
 
     response = requests.post(
-        f"{TRACKING_SERVICE_URL}/trackings/day",
+        f"{API_TEST_GATEWAY_URL}/trackings/day",
         json={
             "date": "2024-09-10",
             "late_morning_symptoms": symptoms,
@@ -41,7 +41,7 @@ def test_create_sleep_tracking(get_auth_token, create_symptoms_and_triggers):
     symptoms, _ = create_symptoms_and_triggers  # Use the created symptoms
 
     response = requests.post(
-        f"{TRACKING_SERVICE_URL}/trackings/sleep",
+        f"{API_TEST_GATEWAY_URL}/trackings/sleep",
         json={
             "duration": 8,
             "date": "2024-09-10",

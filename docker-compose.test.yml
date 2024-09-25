@@ -11,6 +11,8 @@ services:
       context: ./api_gateway
     ports:
       - "8080:8080"
+    volumes:
+      - ./api_gateway:/app
     depends_on:
       - user-service
       - tracking-service

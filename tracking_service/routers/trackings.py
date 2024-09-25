@@ -95,7 +95,6 @@ async def get_trackings_by_user(
     status_code=status.HTTP_201_CREATED,
 )
 def create_day_tracking(
-    # tracking_type: str,
     tracking: DayCreate,
     db: Session = Depends(get_db),
     user_id: int = Security(get_user_id_from_token, scopes=["me"]),
@@ -119,7 +118,6 @@ def create_day_tracking(
     status_code=status.HTTP_201_CREATED,
 )
 def create_sleep_tracking(
-    # tracking_type: str,
     tracking: SleepCreate,
     db: Session = Depends(get_db),
     user_id: int = Security(get_user_id_from_token, scopes=["me"]),
@@ -137,7 +135,6 @@ def create_sleep_tracking(
 
 @router.put("/sleep/{tracking_id}", response_model=SleepOut)
 def update_sleep_tracking(
-    # tracking_type: str,
     tracking_id: int,
     tracking: SleepUpdate,
     db: Session = Depends(get_db),
@@ -162,9 +159,8 @@ def update_sleep_tracking(
 
 @router.put("/day/{tracking_id}", response_model=DayOut)
 def update_day_tracking(
-    # tracking_type: str,
     tracking_id: int,
-    tracking: SleepUpdate,
+    tracking: DayUpdate,
     db: Session = Depends(get_db),
     user_id: int = Security(get_user_id_from_token, scopes=["me"]),
 ) -> DayOut:

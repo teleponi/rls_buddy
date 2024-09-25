@@ -10,7 +10,7 @@
 </head>
 
 <body class="bg-gray-100">
-    <div class="container mx-auto mt-8" x-data="app()">
+    <div class="container mx-auto mt-8" x-data="app()" x-init="init()">
         <div class="bg-white p-8 rounded shadow-md w-full max-w-lg mx-auto">
             <h1 class="text-3xl font-bold mb-4">RLS Buddy</h1>
             <template x-if="isAuthenticated">
@@ -19,28 +19,28 @@
 
 
             <template x-if="!isAuthenticated && !createUserScreen">
-                <form @submit.prevent="login">
-                    <div class="mb-4">
-                        <label class="block text-gray-700">Email</label>
-                        <input type="email" x-model="email"
-                            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700">Password</label>
-                        <input type="password" x-model="password"
-                            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
-                    </div>
-                    <button type="submit"
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Login</button>
+                <div>
+                    <form @submit.prevent="login">
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Email</label>
+                            <input type="email" x-model="email"
+                                class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Password</label>
+                            <input type="password" x-model="password"
+                                class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+                        </div>
+                        <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Login</button>
 
-                    <button @click="selectCreateUser()"
-                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4">Create
-                        User</button>
+                        <button @click="selectCreateUser()"
+                            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4">Create
+                            User</button>
+                    </form>
+                    <div x-show="message" class="mt-4" :class="messageClass" x-text="message"></div>
 
-
-                </form>
-
-                <div x-show="message" class="mt-4" :class="messageClass" x-text="message"></div>
+                </div>
             </template>
 
             <template x-if="!isAuthenticated && createUserScreen">
@@ -340,6 +340,7 @@
             </template>
 
             <script>
+
                 function app() {
                     return {
                         email: '',
@@ -390,9 +391,21 @@
                             this.token = '';
                         },
 
+                        // Method to be called when the component initializes
+                        async init() {
+                            if (localStorage.getItem('token')) {
+                                this.token = localStorage.getItem('token');
+                                this.isAuthenticated = true;
+
+                                // Automatically load symptoms if the token is found
+                                await this.fetchSymptoms();
+                                await this.fetchTriggers();
+                            }
+                        },
+
                         async login() {
                             try {
-                                const response = await fetch('http://127.0.0.1:8080/token', {
+                                const response = await fetch('/token', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -400,25 +413,32 @@
                                     body: `username=${this.email}&password=${this.password}`,
                                 });
 
-                                let data = await response.json();
                                 if (response.ok) {
+                                    let data = await response.json();
                                     if (data.access_token) {
                                         this.token = data.access_token;
                                         this.isAuthenticated = true;
+
+                                        localStorage.setItem('token', this.token);
+
                                         this.fetchSymptoms();
                                         this.fetchTriggers();
                                         this.message = '';
                                         return
                                     }
                                 }
+                                let data = await response.json();
                                 this.message = `Failed to login:\n${data.detail}`;
                                 this.messageClass = 'bg-red-500 text-white p-2 rounded';
+                                console.log("Failed to login")
 
                             } catch (error) {
                                 this.message = `Failed to login`;
                                 this.messageClass = 'bg-red-500 text-white p-2 rounded';
+                                console.log("Failed tox login")
                             }
                         },
+
                         async createUser() {
                             if (this.password !== this.confirmPassword) {
                                 this.message = "Passwords do not match.";
@@ -427,7 +447,7 @@
                             }
 
                             try {
-                                const response = await fetch('http://127.0.0.1:8080/users', {
+                                const response = await fetch('/users', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -455,21 +475,27 @@
 
                         },
 
-                        fetchSymptoms() {
-                            fetch('http://127.0.0.1:8080/details/symptoms', {
+                        async fetchSymptoms() {
+
+                            const response = await fetch('/details/symptoms', {
                                 method: 'GET',
                                 headers: {
                                     'Authorization': `Bearer ${this.token}`,
                                 },
                             })
-                                .then(response => response.json())
-                                .then(data => {
-                                    this.symptoms = data;
-                                })
+                            if (response.ok) {
+                                const data = await response.json();
+                                this.symptoms = data;
+                            } else {
+                                this.message = "Failed to load symptoms.";
+                                this.messageClass = "text-red-500";
+                                console.log("Failed to load symptoms.")
+                            }
                         },
 
                         async fetchTriggers() {
-                            const response = await fetch('http://127.0.0.1:8080/details/triggers', {
+
+                            const response = await fetch('/details/triggers', {
                                 method: 'GET',
                                 headers: {
                                     'Authorization': `Bearer ${this.token}`,
@@ -478,6 +504,7 @@
                             if (response.ok) {
                                 const data = await response.json();
                                 this.triggers = data;
+                                return this.triggers;
                             } else {
                                 this.message = "Failed to load triggers.";
                                 this.messageClass = "text-red-500";
@@ -488,7 +515,7 @@
                         async fetchOverview() {
 
                             this.trackingOverview = [];
-                            let url = `http://127.0.0.1:8080/trackings/me?type=${this.trackingType}`;
+                            let url = `/trackings/me?type=${this.trackingType}`;
                             try {
                                 const response = await fetch(url, {
                                     method: 'GET',
@@ -580,7 +607,7 @@
                             this.trackingOverview.splice(index, 1);
 
                             try {
-                                const response = await fetch(`http://127.0.0.1:8080/trackings/sleep/${this.currentTrackingId}`, {
+                                const response = await fetch(`/trackings/sleep/${this.currentTrackingId}`, {
                                     method: 'DELETE',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -607,7 +634,7 @@
                             this.trackingOverview.splice(index, 1);
 
                             try {
-                                const response = await fetch(`http://127.0.0.1:8080/trackings/day/${this.currentTrackingId}`, {
+                                const response = await fetch(`/trackings/day/${this.currentTrackingId}`, {
                                     method: 'DELETE',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -635,9 +662,8 @@
                             const tracking = this.trackingOverview[index];
                             this.currentTrackingId = tracking.id;  // Set the current tracking ID for later use
 
-                            // Fetch data from API
                             try {
-                                const response = await fetch(`http://127.0.0.1:8080/trackings/sleep/${this.currentTrackingId}`, {
+                                const response = await fetch(`/trackings/sleep/${this.currentTrackingId}`, {
                                     method: 'GET',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -669,7 +695,7 @@
                                     symptoms: this.selectedSymptoms,
                                 })
 
-                                const response = await fetch(`http://127.0.0.1:8080/trackings/sleep/${this.currentTrackingId}`, {
+                                const response = await fetch(`/trackings/sleep/${this.currentTrackingId}`, {
                                     method: 'PUT',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -700,7 +726,7 @@
                         async submitSleepEntry() {
 
                             try {
-                                const response = await fetch(`http://127.0.0.1:8080/trackings/sleep`, {
+                                const response = await fetch(`/trackings/sleep`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -735,7 +761,7 @@
 
                         async submitDayEntry() {
                             try {
-                                const response = await fetch(`http://127.0.0.1:8080/trackings/day`, {
+                                const response = await fetch(`/trackings/day`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -773,7 +799,7 @@
 
                             // Fetch data from API
                             try {
-                                const response = await fetch(`http://127.0.0.1:8080/trackings/day/${this.currentTrackingId}`, {
+                                const response = await fetch(`/trackings/day/${this.currentTrackingId}`, {
                                     method: 'GET',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -805,7 +831,7 @@
                                     triggers: this.selectedTriggers.map(Number)
                                 })
 
-                                const response = await fetch(`http://127.0.0.1:8080/trackings/day/${this.currentTrackingId}`, {
+                                const response = await fetch(`/trackings/day/${this.currentTrackingId}`, {
                                     method: 'PUT',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -837,5 +863,5 @@
 </body>
 
 </html>
-</div>
-</div>
+        </div>
+    </div>

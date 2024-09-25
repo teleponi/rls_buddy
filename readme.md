@@ -17,6 +17,10 @@ Welcome to the RLS-BUDDY project! This project focuses on the prototypical devel
 
 RLS-BUDDY is designed to help users track and manage symptoms of Restless Legs Syndrome. This early prototype leverages FastAPI to create a robust backend infrastructure, providing RESTful APIs for various functionalities. Note that this project is in its early stages, and the frontend development is yet to be implemented.
 
+This project is at a very early stage of development and is intended to serve as a proof of concept for the backend infrastructure. The primary goal is to demonstrate the feasibility of using FastAPI and a microservices architecture to build a scalable and efficient solution for symptom tracking and management.
+
+This project is Open-Source. Feel free to contribute to the project by following the guidelines in the [Contributing](#contributing) section.
+
 ## Architecture
 
 RLS-BUDDY utilizes a microservices architecture to divide the application into smaller, manageable services. Each service handles a specific part of the application's functionality and communicates with other services via RESTful APIs.
@@ -61,49 +65,30 @@ To get started with RLS-BUDDY, follow these steps:
    JWT_SECRET=your_jwt_secret
    ```
 
-5. **Run the application:**
+5. **Run the application on localhost 8000:**
    ```bash
-   uvicorn main:app --reload
+    docker-compose -f docker-compose.test.yml up --build -d
    ```
+
+5. **Run the application for systemtests on localhost 8080:**
+   ```bash
+    docker-compose -f docker-compose.test.yml -p test up --build -d
+   ```
+
+
 
 ## Usage
 
-Once the application is running, you can interact with the services through the API Gateway at `http://localhost:8000`. Here are some basic instructions:
+Once the application is running, you can interact with the services through the Frontend-Prototype at `http://localhost:8000/frontend`.
 
-- **Sign Up / Log In:** Use the `/users` and `/token` endpoints to create an account or log in.
-- **Track Symptoms:** Use the `/trackings` endpoints to log your RLS symptoms.
+## API Documentation User-Service
+
+To access the API documentation, navigate to `http://localhost:8000/user-docs` in your browser. This page provides detailed information about the available endpoints, request parameters, and response formats.
 
 
-** Register a new user:**
-```bash
-    curl -X POST "http://localhost:8000/users" \
-         -H "Content-Type: application/json" \
-         -d '{
-               "email": "alice@example.com",
-               "password": "secret",
-               "name": "Alice"
-             }'
-```
+## API Documentation Tracking-Service
 
-** List all users:**
-```bash
-    curl -X GET "http://localhost:8000/users"
-```
-
-** get user token by email and password:**
-```bash
-    curl -X POST "http://localhost:8000/token" \
-         -H "Content-Type: application/json" \
-         -d '{
-               "email": "alice@example.com",
-               "password": "secret",
-             }'
-```
-
-**Returns:**
-```json
-{"access_token":"yJhbGciOiJIUzI1NiIsInR5cCI6I.....kpXgv3x6VPjhnYNtB_pBBGJ3F_asO9_mQYKuyGzzET8l4","token_type":"bearer"}
-```
+To access the API documentation, navigate to `http://localhost:8000/tracking-docs` in your browser. This page provides detailed information about the available endpoints, request parameters, and response formats.
 
 ## Contributing
 
@@ -114,7 +99,7 @@ We welcome contributions from the community! To contribute to RLS-BUDDY, follow 
 
 2. **Clone your fork:**
    ```bash
-   git clone https://github.com/yourusername/rls-buddy.git
+   git clone https://github.com/teleponi/rls-buddy.git
    cd rls-buddy
    ```
 
@@ -137,42 +122,6 @@ We welcome contributions from the community! To contribute to RLS-BUDDY, follow 
    Go to the original repository on GitHub and click "New Pull Request" to submit your changes for review.
 
 
-### Login into Postgres Database Container
-
-```bash
-docker exec -it 9230 sh
-```
-
-### Connect to Database users
-
-```bash
-psql -d users -U user
-```
-
-### Select all from Table
-
-```bash
-SELECT * from users;
-```
-
-## Alter table
-```bash
-ALTER TABLE trackings
-ADD COLUMN user_id INTEGER NOT NULL,
-ADD COLUMN timestamp TIMESTAMP NOT NULL;
-```
-
-## View Table Schema
-```bash
-\d trackings
-```
-
-## Insert Symptoms
-```bash
-insert into symptoms (name) VALUES ('pain');
-insert into symptoms (name) VALUES ('itching');
-```
-
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
@@ -192,7 +141,7 @@ Integration testing is a crucial part of the development process for ensuring th
 
 To isolate the testing environment from the development and production environments, we have created a dedicated Docker Compose setup (`docker-compose.test.yml`). This setup includes separate instances of the services and databases used exclusively for testing purposes. This ensures that test data does not interfere with the main databases and that tests can be run in a clean environment.
 
-### Integration tests
+### Systemtests
 
 1. **Start the Test Environment:**
 
@@ -229,16 +178,14 @@ The integration tests cover several critical aspects of the system, including:
 
 - **Health Checks:** Verifying that all services are up and running.
 - **User Authentication:** Testing the creation of users, token generation, and token validation.
-- **Tracking Data Management:** Ensuring that sleep and day tracking data can be created, retrieved, and managed correctly through the API Gateway.
-- **Service Communication:** Confirming that the API Gateway correctly routes requests to the appropriate microservices and that the services communicate as expected.
-
-to generate a coverage report, run:
 
    ```bash
    cd user_service
    pytest tests -vv --cov=./ --cov-config=.converage.rc --no-header
    ```
+
    to generate a html report, run:
+
    ```bash
     pytest tests/ -vv --cov=./  --cov-report=html --no-header
     ```
@@ -249,9 +196,7 @@ to generate a coverage report, run:
 The integration tests cover several critical aspects of the system, including:
 
 - **Health Checks:** Verifying that all services are up and running.
-- **User Authentication:** Testing the creation of users, token generation, and token validation.
 - **Tracking Data Management:** Ensuring that sleep and day tracking data can be created, retrieved, and managed correctly through the API Gateway.
-- **Service Communication:** Confirming that the API Gateway correctly routes requests to the appropriate microservices and that the services communicate as expected.
 
 to generate a coverage report, run:
 
@@ -259,10 +204,12 @@ to generate a coverage report, run:
    cd tracking_service
    pytest tests -vv --cov=./  --no-header
    ```
-   to generate a html report, run:
+
+to generate a html report, run:
    ```bash
     pytest tests/ -vv --cov=./  --cov-report=html --no-header
     ```
+
 ### Migrations
 
     Migraitons are done with Alembic. To init alembic in a new service, run:
