@@ -5,3 +5,4 @@ pyjwt
 passlib[bcrypt]
 pika
 pytest
+jinja2

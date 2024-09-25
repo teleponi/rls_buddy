@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLS Buddy</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.7.0/dist/cdn.min.js" defer></script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto mt-8" x-data="app()">
+        <div class="bg-white p-8 rounded shadow-md w-full max-w-lg mx-auto">
+            <h1 class="text-3xl font-bold mb-4">RLS Buddy</h1>
+            <template x-if="isAuthenticated">
+                <p>you are logged in.</p>
+            </template>
+
+
+            <template x-if="!isAuthenticated && !createUserScreen">
+                <form @submit.prevent="login">
+                    <div class="mb-4">
+                        <label class="block text-gray-700">Email</label>
+                        <input type="email" x-model="email"
+                            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700">Password</label>
+                        <input type="password" x-model="password"
+                            class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+                    </div>
+                    <button type="submit"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Login</button>
+
+                    <button @click="selectCreateUser()"
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4">Create
+                        User</button>
+
+
+                </form>
+
+                <div x-show="message" class="mt-4" :class="messageClass" x-text="message"></div>
+            </template>
+
+            <template x-if="!isAuthenticated && createUserScreen">
+                <div>
+                    <h2 class="text-2xl font-bold mb-4">Create User</h2>
+
+                    <form @submit.prevent="createUser">
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Username</label>
+                            <input type="name" x-model="name"
+                                class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Email</label>
+                            <input type="email" x-model="email"
+                                class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Password</label>
+                            <input type="password" x-model="password"
+                                class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Confirm Password</label>
+                            <input type="password" x-model="confirmPassword"
+                                class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+                        </div>
+
+
+                        <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Create
+                            User</button>
+
+                        <button @click="selectDashboard()"
+                            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-2">Zurück zur
+                            Auswahl
+                        </button>
+
+                    </form>
+
+                    <div x-show="message" class="mt-4" :class="messageClass" x-text="message"></div>
+                </div>
+            </template>
+
+            <template x-if="isAuthenticated && !isTracking && !isOverview">
+                <div>
+                    <h2 class="text-2xl font-bold mb-4">Dashboard</h2>
+
+                    <button @click="selectTracking('sleep')"
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-2 w-full">Track
+                        Sleep</button>
+                    <button @click="selectOverview('sleep')"
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-2 w-full">Show
+                        sleep
+                        entries</button>
+
+                    <button @click="selectOverview('day')"
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-2 w-full">Show
+                        Days</button>
+
+                    <button @click="selectTracking('day')"
+                        class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mb-2 w-full">Track
+                        Day</button>
+
+                    <button @click="logout()"
+                        class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mb-2 w-full">Logout</button>
+
+                </div>
+            </template>
+
+            <template x-if="isOverview && trackingType === 'day'">
+                <div>
+                    <h2 class="text-2xl font-bold mb-4">Day Overview</h2>
+                    <button @click="goBackToMain"
+                        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mt-4">
+                        Back to Main
+                    </button>
+
+                    <template x-if="trackingOverview.length === 0">
+                        <p>No day entries found.</p>
+                    </template>
+
+                    <div class="space-y-4">
+                        <template x-for="(tracking, index) in trackingOverview" :key="index">
+                            <div class="p-4 bg-white rounded-lg shadow">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h3 class="text-xl font-semibold">Date: <span x-text="tracking.date"></span>
+                                        </h3>
+                                        <p>Comment: <span x-text="tracking.comment"></span></p>
+                                        <p>ID: <span x-text="tracking.id"></span></p>
+                                    </div>
+                                    <div class="text-right">
+                                        <button @click="editDayTracking(index)"
+                                            class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                                            Edit
+                                        </button>
+
+                                        <button @click="deleteDayTracking(index)"
+                                            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+            </template>
+
+
+            <template x-if="isOverview && trackingType === 'sleep'">
+
+                <div>
+                    <h2 class="text-2xl font-bold mb-4">Sleep Overview</h2>
+                    <button @click="goBackToMain"
+                        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mt-4">
+                        Back to Main
+                    </button>
+
+                    <template x-if="trackingOverview.length === 0">
+                        <p>No sleep entries found.</p>
+                    </template>
+
+
+                    <div class="space-y-4">
+                        <template x-for="(tracking, index) in trackingOverview" :key="index">
+                            <div class="p-4 bg-white rounded-lg shadow">
+                                <div class="flex justify-between items-center">
+                                    <div>
+
+                                        <h3 class="text-xl font-semibold">Date: <span x-text="tracking.date"></span>
+                                        </h3>
+                                        <p>Duration: <span x-text="tracking.duration"></span> hours</p>
+                                        <p>Quality: <span x-text="tracking.quality"></span></p>
+                                        <p>Comment: <span x-text="tracking.comment"></span></p>
+                                        <p>ID: <span x-text="tracking.id"></span></p>
+                                    </div>
+                                    <div class="text-right">
+
+                                        <button @click="editSleepTracking(index)"
+                                            class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                                            Edit
+                                        </button>
+                                        <!-- Delete Button -->
+                                        <button @click="deleteSleepTracking(index)"
+                                            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+            </template>
+
+
+            <template x-if="isTracking && trackingType === 'sleep'">
+                <div>
+                    <h2 class="text-2xl font-bold mb-4" x-text="currentTrackingId ? 'Edit Sleep' : 'Track Sleep'"></h2>
+
+                    <form @submit.prevent="currentTrackingId ? submitUpdateSleepEntry : submitSleepEntry">
+                        <template x-if="!currentTrackingId">
+                            <div class="mb-4">
+                                <label class="block text-gray-700">Date</label>
+                                <input type="date" x-model="sleepDate"
+                                    class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+                            </div>
+                        </template>
+
+
+                        <template x-if="currentTrackingId">
+
+                            <p>ID: <span x-text="currentTrackingId"></span></p>
+                            <div class="mb-4">
+                                <label class="block text-gray-700">Date</label>
+                                <input type="date" x-model="sleepDate"
+                                    class="mt-1 block w-full border rounded px-3 py-2 bg-gray-100 text-gray-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                    disabled>
+                            </div>
+                        </template>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Duration (hours)</label>
+                            <input type="number" x-model="sleepDuration"
+                                class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" min="-10" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Quality</label>
+                            <select x-model="sleepQuality"
+                                class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+                                <option value="good">Good</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="bad">Bad</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Comment</label>
+                            <textarea x-model="sleepComment"
+                                class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Symptoms</label>
+                            <div class="flex flex-wrap">
+                                <template x-for="symptom in symptoms" :key="symptom.id">
+                                    <label class="mr-4">
+                                        <input type="checkbox" :value="symptom.id" x-model="selectedSymptoms"> <span
+                                            x-text="symptom.name"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+                        <button type="submit"
+                            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Submit</button>
+                        <button @click="isTracking = false, message=''"
+                            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-2">Zurück zur
+                            Auswahl
+                        </button>
+                    </form>
+                    <div x-show="message" class="mt-4" :class="messageClass" x-text="message"></div>
+                </div>
+            </template>
+
+            <template x-if="isTracking && trackingType === 'day'">
+                <div>
+                    <h2 class="text-2xl font-bold mb-4" x-text="currentTrackingId ? 'Edit Day' : 'Track Day'"></h2>
+
+                    <form @submit.prevent="currentTrackingId ? submitUpdateDayEntry : submitDayEntry">
+
+
+                        <template x-if="!currentTrackingId">
+                            <div class="mb-4">
+                                <label class="block text-gray-700">Date</label>
+                                <input type="date" x-model="dayDate"
+                                    class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+                            </div>
+                        </template>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Comment</label>
+                            <textarea x-model="dayComment"
+                                class="mt-1 block w-full border border-gray-300 rounded px-3 py-2"></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Symptom Vormittag</label>
+                            <div class="flex flex-wrap">
+                                <template x-for="symptom in symptoms" :key="symptom.id">
+                                    <label class="mr-4">
+                                        <input type="checkbox" :value="symptom.id" x-model="selectedDaySymptoms">
+                                        <span x-text="symptom.name"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Symptom Nachmittags/Abends</label>
+                            <div class="flex flex-wrap">
+                                <template x-for="symptom in symptoms" :key="symptom.id">
+                                    <label class="mr-4">
+                                        <input type="checkbox" :value="symptom.id" x-model="selectedAfternoonSymptoms">
+                                        <span x-text="symptom.name"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700">Triggers</label>
+                            <div class="flex flex-wrap">
+                                <template x-for="trigger in triggers" :key="trigger.id">
+                                    <label class="mr-4">
+                                        <input type="checkbox" :value="trigger.id" x-model="selectedTriggers">
+                                        <span x-text="trigger.name"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                            class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Submit</button>
+                        <button @click="isTracking = false,message=''"
+                            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-2">Zurück zur
+                            Auswahl
+                        </button>
+
+                    </form>
+                    <div x-show="message" class="mt-4" :class="messageClass" x-text="message"></div>
+                </div>
+            </template>
+
+            <script>
+                function app() {
+                    return {
+                        email: '',
+                        password: '',
+                        isAuthenticated: false,
+                        token: '',
+
+                        // user
+                        name: '',
+                        email: '',
+                        password: '',
+                        confirmPassword: '',
+                        createUserScreen: false,
+
+                        // tracking
+                        currentTrackingId: null,
+                        isTracking: false,
+                        trackingType: '',
+                        messageClass: '',
+                        message: '',
+
+
+                        // sleep
+                        sleepDate: '',
+                        sleepDuration: '',
+                        sleepQuality: 'good',
+                        sleepComment: '',
+                        selectedSymptoms: [],
+                        symptoms: [],
+
+                        // day
+                        dayDate: '',
+                        dayComment: '',
+                        late_morning_symptoms: [],
+                        afternoon_symptoms: [],
+                        triggers: [],
+                        selectedTriggers: [],
+                        selectedDaySymptoms: [],
+                        selectedAfternoonSymptoms: [],
+
+                        // Overview
+                        isOverview: false,
+                        trackingOverview: [],
+
+                        logout() {
+                            this.reset();
+                            this.isAuthenticated = false;
+                            this.token = '';
+                        },
+
+                        async login() {
+                            try {
+                                const response = await fetch('http://127.0.0.1:8080/token', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                    },
+                                    body: `username=${this.email}&password=${this.password}`,
+                                });
+
+                                let data = await response.json();
+                                if (response.ok) {
+                                    if (data.access_token) {
+                                        this.token = data.access_token;
+                                        this.isAuthenticated = true;
+                                        this.fetchSymptoms();
+                                        this.fetchTriggers();
+                                        this.message = '';
+                                        return
+                                    }
+                                }
+                                this.message = `Failed to login:\n${data.detail}`;
+                                this.messageClass = 'bg-red-500 text-white p-2 rounded';
+
+                            } catch (error) {
+                                this.message = `Failed to login`;
+                                this.messageClass = 'bg-red-500 text-white p-2 rounded';
+                            }
+                        },
+                        async createUser() {
+                            if (this.password !== this.confirmPassword) {
+                                this.message = "Passwords do not match.";
+                                this.messageClass = 'bg-red-500 text-white p-2 rounded';
+                                return;
+                            }
+
+                            try {
+                                const response = await fetch('http://127.0.0.1:8080/users', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        name: this.name,
+                                        email: this.email,
+                                        password: this.password,
+                                    }),
+                                });
+                                if (response.ok) {
+                                    this.message = 'User created successfully';
+                                    this.messageClass = 'bg-green-500 text-white p-2 rounded';
+                                    this.createUserScreen = false;
+                                } else {
+                                    let data = await response.json();
+                                    this.message = `Failed to create user:\n${data.detail}`;
+                                    this.messageClass = 'bg-red-500 text-white p-2 rounded';
+                                }
+
+                            } catch (error) {
+                                this.message = 'Failed to create users';
+                                this.messageClass = 'bg-red-500 text-white p-2 rounded';
+                            }
+
+                        },
+
+                        fetchSymptoms() {
+                            fetch('http://127.0.0.1:8080/details/symptoms', {
+                                method: 'GET',
+                                headers: {
+                                    'Authorization': `Bearer ${this.token}`,
+                                },
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    this.symptoms = data;
+                                })
+                        },
+
+                        async fetchTriggers() {
+                            const response = await fetch('http://127.0.0.1:8080/details/triggers', {
+                                method: 'GET',
+                                headers: {
+                                    'Authorization': `Bearer ${this.token}`,
+                                },
+                            })
+                            if (response.ok) {
+                                const data = await response.json();
+                                this.triggers = data;
+                            } else {
+                                this.message = "Failed to load triggers.";
+                                this.messageClass = "text-red-500";
+                                console.log("Failed to load triggers.")
+                            }
+                        },
+
+                        async fetchOverview() {
+
+                            this.trackingOverview = [];
+                            let url = `http://127.0.0.1:8080/trackings/me?type=${this.trackingType}`;
+                            try {
+                                const response = await fetch(url, {
+                                    method: 'GET',
+                                    headers: {
+                                        'Authorization': `Bearer ${this.token}`,
+                                    },
+                                });
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    this.trackingOverview = data;
+                                } else {
+                                    this.message = "Failed to load data.";
+                                    this.messageClass = "text-red-500";
+                                }
+                            } catch (error) {
+                                this.message = "Failed to load data.";
+                                this.messageClass = "text-red-500";
+                            }
+                        },
+
+                        goBackToMain() {
+                            this.reset()
+                        },
+
+                        reset() {
+                            this.isTracking = false;
+                            this.isOverview = false;
+                            this.createUserScreen = false;
+                            this.trackingType = '';
+                            this.trackingOverview = [];
+                            this.currentTrackingId = null;
+                            this.message = '';
+                            this.messageClass = '';
+                            this.email = '';
+                            this.password = '';
+                            this.sleepDate = '';
+                            this.sleepDuration = '';
+                            this.sleepQuality = 'good';
+                            this.sleepComment = '';
+                            this.selectedSymptoms = [];
+                            this.name = '';
+                            this.dayDate = '';
+                            this.dayComment = '';
+                            this.selectedDaySymptoms = [];
+                            this.selectedAfternoonSymptoms = [];
+                            this.selectedTriggers = [];
+                        },
+
+                        selectTracking(type) {
+                            this.reset()
+                            this.trackingType = type;
+                            this.isTracking = true;
+                            this.isOverview = false;
+                        },
+                        selectDashboard() {
+                            this.reset()
+                        },
+                        selectCreateUser() {
+                            this.reset()
+                            this.createUserScreen = true;
+                        },
+
+                        selectOverview(type) {
+                            this.reset()
+                            this.trackingType = type;
+                            this.isOverview = true;
+                            this.fetchOverview();
+                        },
+
+                        clearSleepForm() {
+                            this.sleepDate = '';
+                            this.sleepDuration = '';
+                            this.sleepQuality = 'good';
+                            this.sleepComment = '';
+                            this.selectedSymptoms = [];
+                        },
+                        clearDayForm() {
+                            this.dayDate = '';
+                            this.dayComment = '';
+                            this.selectedDaySymptoms = [];
+                            this.selectedAfternoonSymptoms = [];
+                            this.selectedTriggers = [];
+                        },
+
+
+                        async deleteSleepTracking(index) {
+                            const tracking = this.trackingOverview[index];
+                            this.currentTrackingId = tracking.id;
+                            this.trackingOverview.splice(index, 1);
+
+                            try {
+                                const response = await fetch(`http://127.0.0.1:8080/trackings/sleep/${this.currentTrackingId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${this.token}`,
+                                    }
+                                });
+                                if (response.ok) {
+                                    this.message = "Sleep entry deleted successfully.";
+                                    this.messageClass = "text-green-500";
+                                } else {
+                                    this.message = "Failed to delete sleep entry.";
+                                    this.messageClass = "text-red-500";
+                                }
+
+                            } catch (error) {
+                                this.message = "Failed to delete sleep entry.";
+                                this.messageClass = "text-red-500";
+                            }
+                        },
+
+                        async deleteDayTracking(index) {
+                            const tracking = this.trackingOverview[index];
+                            this.currentTrackingId = tracking.id;
+                            this.trackingOverview.splice(index, 1);
+
+                            try {
+                                const response = await fetch(`http://127.0.0.1:8080/trackings/day/${this.currentTrackingId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${this.token}`,
+                                    }
+                                });
+                                if (response.ok) {
+                                    this.message = "day entry deleted successfully.";
+                                    this.messageClass = "text-green-500";
+                                } else {
+                                    this.message = "Failed to delete day entry.";
+                                    this.messageClass = "text-red-500";
+                                }
+
+                            } catch (error) {
+                                this.message = "Failed to delete day entry.";
+                                this.messageClass = "text-red-500";
+                            }
+                        },
+
+
+                        async editSleepTracking(index) {
+                            this.isTracking = true; // Show the form
+                            this.isOverview = false;
+                            const tracking = this.trackingOverview[index];
+                            this.currentTrackingId = tracking.id;  // Set the current tracking ID for later use
+
+                            // Fetch data from API
+                            try {
+                                const response = await fetch(`http://127.0.0.1:8080/trackings/sleep/${this.currentTrackingId}`, {
+                                    method: 'GET',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${this.token}`,
+                                    }
+                                });
+                                const data = await response.json();
+                                const formattedDate = new Date(data.date).toISOString().split('T')[0];
+
+                                // Populate form with data
+                                this.sleepDate = formattedDate;
+                                this.sleepDuration = data.duration;
+                                this.sleepQuality = data.quality;
+                                this.sleepComment = data.comment;
+                                this.selectedSymptoms = data.symptoms.map(s => s.id); // Assuming symptoms are objects with id and name
+
+                            } catch (error) {
+                                this.message = "Failed to load tracking data.";
+                                this.messageClass = "text-red-500";
+                            }
+                        },
+
+                        async submitUpdateSleepEntry() {
+                            try {
+                                let body = JSON.stringify({
+                                    duration: this.sleepDuration,
+                                    quality: this.sleepQuality,
+                                    comment: this.sleepComment,
+                                    symptoms: this.selectedSymptoms,
+                                })
+
+                                const response = await fetch(`http://127.0.0.1:8080/trackings/sleep/${this.currentTrackingId}`, {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${this.token}` // Assume token is available
+                                    },
+                                    body: body
+                                });
+
+                                let data = await response.json();
+                                if (response.ok) {
+                                    this.message = "Sleep entry updated successfully.";
+                                    this.messageClass = "text-green-500";
+                                    this.clearSleepForm();
+                                    this.currentTrackingId = null;
+                                    this.isTracking = false;
+                                    //this.isOverview = true;  // Show the overview again
+                                } else {
+                                    this.message = `Failed to update sleep entry:\n${data.detail.join('<br>')}`;
+                                    this.messageClass = "text-red-500";
+                                }
+
+                            } catch (error) {
+                                this.message = "Error occurred while updating sleep entry.";
+                                this.messageClass = "text-red-500";
+                            }
+                        },
+
+                        async submitSleepEntry() {
+
+                            try {
+                                const response = await fetch(`http://127.0.0.1:8080/trackings/sleep`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${this.token}` // Assume token is available
+                                    },
+                                    body: JSON.stringify({
+                                        date: this.sleepDate,
+                                        duration: this.sleepDuration,
+                                        quality: this.sleepQuality,
+                                        comment: this.sleepComment,
+                                        symptoms: this.selectedSymptoms.map(Number),
+                                    })
+                                });
+
+                                let data = await response.json();
+                                if (response.ok) {
+                                    this.message = `Sleep entry ${data.id} added successfully`;
+                                    this.messageClass = 'bg-green-500 text-white p-2 rounded';
+                                    this.clearSleepForm();
+                                    //this.isTracking = false;
+                                } else {
+                                    this.message = `Failed to add sleep entry:\n${data.detail.join('<br>')}`;
+                                    this.messageClass = 'bg-red-500 text-white p-2 rounded';
+                                }
+
+                            } catch (error) {
+                                this.message = "Error occurred while inserting sleep entry." + error;
+                                this.messageClass = "text-red-500";
+                                console.log(error)
+                            }
+                        },
+
+                        async submitDayEntry() {
+                            try {
+                                const response = await fetch(`http://127.0.0.1:8080/trackings/day`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${this.token}` // Assume token is available
+                                    },
+                                    body: JSON.stringify({
+                                        date: this.dayDate,
+                                        comment: this.dayComment,
+                                        late_morning_symptoms: this.selectedDaySymptoms.map(Number),
+                                        afternoon_symptoms: this.selectedAfternoonSymptoms.map(Number),
+                                        triggers: this.selectedTriggers.map(Number)
+                                    })
+                                });
+                                let data = await response.json();
+                                if (response.ok) {
+                                    this.message = `Day entry ${data.id} added successfully`;
+                                    this.messageClass = 'bg-green-500 text-white p-2 rounded';
+                                    this.clearDayForm();
+                                } else {
+                                    this.message = `Failed to add day entry:\n${data.detail.join('<br>')}`;
+                                    this.messageClass = 'bg-red-500 text-white p-2 rounded';
+                                }
+
+                            } catch (error) {
+                                this.message = "Error occurred while inserting day entry.";
+                                this.messageClass = "text-red-500";
+                            }
+                        },
+
+                        async editDayTracking(index) {
+                            this.isTracking = true; // Show the form
+                            this.isOverview = false;
+                            const tracking = this.trackingOverview[index];
+                            this.currentTrackingId = tracking.id;
+
+                            // Fetch data from API
+                            try {
+                                const response = await fetch(`http://127.0.0.1:8080/trackings/day/${this.currentTrackingId}`, {
+                                    method: 'GET',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${this.token}`,
+                                    }
+                                });
+                                const data = await response.json();
+                                const formattedDate = new Date(data.date).toISOString().split('T')[0];
+
+                                // Populate form with data
+                                this.dayDate = formattedDate;
+                                this.dayComment = data.comment;
+                                this.selectedDaySymptoms = data.late_morning_symptoms.map(s => s.id);
+                                this.selectedAfternoonSymptoms = data.afternoon_symptoms.map(s => s.id);
+                                this.selectedTriggers = data.triggers.map(s => s.id);
+
+                            } catch (error) {
+                                this.message = "Failed to load tracking data.";
+                                this.messageClass = "text-red-500";
+                            }
+                        },
+                        async submitUpdateDayEntry() {
+                            try {
+                                let body = JSON.stringify({
+                                    date: this.dayDate,
+                                    comment: this.dayComment,
+                                    late_morning_symptoms: this.selectedDaySymptoms.map(Number),
+                                    afternoon_symptoms: this.selectedAfternoonSymptoms.map(Number),
+                                    triggers: this.selectedTriggers.map(Number)
+                                })
+
+                                const response = await fetch(`http://127.0.0.1:8080/trackings/day/${this.currentTrackingId}`, {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${this.token}` // Assume token is available
+                                    },
+                                    body: body
+                                });
+
+                                if (response.ok) {
+                                    this.message = "Day entry updated successfully.";
+                                    this.messageClass = "text-green-500";
+                                    this.clearDayForm();
+                                    this.currentTrackingId = null;
+                                    this.isTracking = false;
+                                } else {
+                                    let data = await response.json();
+                                    this.message = `Failed to update day entry:\n${data.detail.join('<br>')}`;
+                                    this.messageClass = "text-red-500";
+                                }
+
+                            } catch (error) {
+                                this.message = "Error occurred while updating day entry.";
+                                this.messageClass = "text-red-500";
+                            }
+                        },
+                    };
+                }
+            </script>
+</body>
+
+</html>
+</div>
+</div>

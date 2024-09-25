@@ -11,7 +11,7 @@ class SleepCreate(TrackingCreate):
     duration: PositiveInt
     date: datetime
     quality: SleepQuality
-    comment: str | None  # Todo: Add comments to the model
+    comment: str | None
     symptoms: list[int] | None
 
 
@@ -19,7 +19,7 @@ class SleepUpdate(TrackingUpdate):
     duration: PositiveInt
     quality: SleepQuality
     symptoms: list[int] | None
-    comment: str  # Todo: Add comments to the model
+    comment: str
 
 
 class SleepOut(TrackingOut):
@@ -27,4 +27,4 @@ class SleepOut(TrackingOut):
     date: datetime
     quality: SleepQuality
     symptoms: list[Symptom]
-    comment: str  # Todo: Add comments to the model
+    comment: str

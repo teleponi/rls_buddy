@@ -22,6 +22,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 
 app = FastAPI()
@@ -41,10 +42,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+templates = Jinja2Templates(directory="templates")
+
 
 @app.get("/")
 def read_root():
     return {"message": "API Gateway"}
+
+
+@app.get("/frontend", response_class=HTMLResponse, include_in_schema=False)
+async def get_frontend_prototype(request: Request) -> Response:
+    context = {"request": request, "project_name": "RLS-BUDDY"}
+
+    return templates.TemplateResponse("index.html", context)
 
 
 @app.get("/health", status_code=200, include_in_schema=False)
